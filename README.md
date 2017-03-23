@@ -1,16 +1,16 @@
-## MirrorsEdgeCatalyst-Translation-Tool
+# MirrorsEdgeCatalyst-Translation-Tool
 
-#What it does? 
+## What it does? 
 it exports Mirror's Edge: Catalyst language subtitles to excel file and lets you import back that edited excel file.
 
-#Parameters
+## Parameters
 -export [Game Directory] [Language shortcode]
 Example : -export "C:\Games\Mirrors Edge" de
 
 -import [Game Directory] [Language shortcode] [Excel File Location]
 Example : -import "C:\Games\Mirrors Edge" de "C:\Users\User\Desktop\Translation\de.xlsl"
 
-#How it works?
+## How it works?
 Export : Program must locate "[Language shortcode].toc" file inside "[Game Directory]\Patch" for extraction. 
 After that it creates excel file which contains subtitles of that language at program location.  
 
