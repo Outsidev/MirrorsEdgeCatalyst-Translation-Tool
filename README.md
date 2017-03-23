@@ -18,8 +18,11 @@ After that it creates excel file which contains subtitles of that language at pr
 Import : After editing subtitle file, program must locate corresponding cas files inside "[Game Directory]\Patch" folder.   
 Then it creates backups of those files and writes new subtitles.  
 
-##
+## Notes
 
 Language shortcodes: You must use language shortcodes of toc files, which is in loc folder.  
+
+This program mostly based on english language files. Encodings may differ in other language files. Game uses it's own byte dictionary for storing characters.   
+Program not in perfect state.  
 
 This program uses EPPlus for exporting excel file.   
