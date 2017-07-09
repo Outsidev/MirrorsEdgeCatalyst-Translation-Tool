@@ -48,7 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryReaderV.cs" />
-    <Compile Include="BinaryWriterV.cs" />
     <Compile Include="Cat.cs" />
     <Compile Include="CompressionThing.cs" />
     <Compile Include="Entry.cs" />
