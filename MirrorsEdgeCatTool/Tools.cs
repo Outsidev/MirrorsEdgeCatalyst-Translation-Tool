@@ -175,7 +175,7 @@ namespace MirrorsEdgeCatTool
 
         }
 
-        public static List<string> GetDirectories(MainEntry[] entryFiles, string directoryPath)
+        public static List<string> GetDirectories(MainEntry[] entryFiles)
         {
             List<string> everyDirectory = new List<string>();
             foreach (MainEntry ent in entryFiles)
@@ -214,6 +214,35 @@ namespace MirrorsEdgeCatTool
             }
 
             return katFile;
+        }
+
+        public static string GetLanguageShortCode(string lang)
+        {
+            switch (lang.ToLower())
+            {
+                case "english":
+                    return "en";
+                case "polish":
+                    return "pl";
+                case "italian":
+                    return "it";
+                case "spanish":
+                    return "es";
+                case "french":
+                    return "fr";
+                case "japanese":
+                    return "jp";
+                case "brazilianportuguese":
+                    return "br";
+                case "german":
+                    return "de";
+                case "russian":
+                    return "ru";
+                case "traditionalchinese":
+                    return "tc";
+                default:
+                    return "NOPE";
+            }
         }
     }
 }

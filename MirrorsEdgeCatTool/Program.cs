@@ -21,6 +21,7 @@ namespace MirrorsEdgeCatTool
         static void Main(string[] args)
         {
             CurrentPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            //args = new string[] { "import", @"C:\Games\Mirror's Edge - Catalyst", "en.kindaorg.xlsx", "en" };
             if (args[0] == "export")
             {
                 //gameLoc, lang
@@ -28,7 +29,7 @@ namespace MirrorsEdgeCatTool
                 string lang = args[2];
 
                 Console.WriteLine(":Export:");
-                Console.WriteLine("GamePath: " + Path.Combine(GamePath, MainFolder) );
+                Console.WriteLine("GamePath: " + Path.Combine(GamePath, MainFolder));
                 Console.WriteLine("Lang: " + lang);
 
                 ReadTocSbCatFiles();
@@ -47,16 +48,15 @@ namespace MirrorsEdgeCatTool
                 Console.WriteLine("Lang: " + lang);
 
                 ReadTocSbCatFiles();
-                EditLanguage(lang, excelLoc);
+                ImportLanguage(lang, excelLoc);
             }
-            else if(args[0] == "about")
+            else if (args[0] == "about")
             {
                 Console.WriteLine("Mirrors Edge Catalyst Translation Tool");
                 Console.WriteLine("Burak Sey - 2017.03");
-            }            
+            }
 
             Console.WriteLine("DONE!");
-            Console.ReadKey();
         }
 
         static void ReadTocSbCatFiles()
@@ -76,7 +76,7 @@ namespace MirrorsEdgeCatTool
                 string path = allTocPaths[i];
                 tocFiles[i] = new Toc(path);
             }
-            Console.WriteLine("Tocs Done.");
+            //Console.WriteLine("Tocs Done.");
 
             /*for (int i = 0; i < allSbPaths.Length; i++)
             {
@@ -90,10 +90,10 @@ namespace MirrorsEdgeCatTool
                 string path = allCatPaths[i];
                 catFiles[i] = new Cat(path);
             }
-            Console.WriteLine("Cats Done.");
+            //Console.WriteLine("Cats Done.");
         }
 
-        static void EditLanguage(string lang, string excelPath)
+        static void ImportLanguage(string lang, string excelPath)
         {
             CompressionThing compressor = new CompressionThing();
 
@@ -105,17 +105,17 @@ namespace MirrorsEdgeCatTool
             Kat kat2 = Tools.GetCatSettings(catFiles, ent2.subTypes["sha1"]);
             Entry bigEnt = kat1.size > kat2.size ? ent1 : ent2;
             //bigger one is subtitle one
-            byte[] sha1 = bigEnt.subTypes["sha1"];
-            byte[] id   = bigEnt.subTypes["id"];
-            string idStr = BitConverter.ToString(id).Replace("-", "");
-            Kat deKat   = Tools.GetCatSettings(catFiles, sha1);
+            byte[] sha1     = bigEnt.subTypes["sha1"];
+            byte[] id       = bigEnt.subTypes["id"];
+            string idStr    = BitConverter.ToString(id).Replace("-", "");
+            Kat deKat       = Tools.GetCatSettings(catFiles, sha1);
 
             Console.WriteLine("Compressing..");
-            byte[] aa;
+            byte[] compressedNewBytes;
             if (lang == "de" || lang == "zh" || lang == "ja" )
-                aa = compressor.compressGermanLZ4(excelPath);
+                compressedNewBytes = compressor.compressGermanLZ4(excelPath);
             else
-                aa = compressor.compressLZ4(excelPath);
+                compressedNewBytes = compressor.compressLZ4(excelPath);
 
             Console.WriteLine("OK.");
 
@@ -123,17 +123,17 @@ namespace MirrorsEdgeCatTool
             string cas1path = Path.Combine(GamePath, MainFolder, @"Win32\gameconfigurations\initialinstallpackage\cas_01.cas");
             byte[] cas1 = File.ReadAllBytes(cas1path);
             int z = 0;
-            if(aa.Length > (uint)deKat.size)
+            if(compressedNewBytes.Length > (uint)deKat.size)
             {
-                Console.WriteLine("Yeni dosyanın boyutu ("+ aa.Length +") Orjinal boyuttan ("+ deKat.size +") daha büyük!\nİptal.. ");
+                Console.WriteLine("Yeni dosyanın boyutu ("+ compressedNewBytes.Length +") Orjinal boyuttan ("+ deKat.size +") daha büyük!\nİptal.. ");
                 return;
             }
 
             for (uint i = deKat.offset; i < deKat.offset + deKat.size; i++)
             {
-                if (z < aa.Length)
+                if (z < compressedNewBytes.Length)
                 {
-                    cas1[i] = aa[z];
+                    cas1[i] = compressedNewBytes[z];
                     z++;
                 }
                 else
@@ -179,14 +179,17 @@ namespace MirrorsEdgeCatTool
         }
 
 
-        static void ExportLanguageSubtitle(string lang)
+        static void ExportLanguageSubtitle(string lang, string exportpath="")
         {
             byte[] data = ExportChunk(lang);
             CompressionThing deCompressor = new CompressionThing();
             data = deCompressor.decompressLZ4(data);
-                                                
-            string exportPath = Tools.EnumarateFileName(CurrentPath, lang);
-            deCompressor.ExportTextsToExcelFile(exportPath, data);
+
+            //File.WriteAllBytes(Path.Combine(CurrentPath,"en.bin.GOODY"), data);
+            if(exportpath == "")
+                exportpath = Tools.EnumarateFileName(CurrentPath, lang);
+
+            deCompressor.ExportTextsToExcelFile(exportpath, data);
 
         }
 
@@ -262,20 +265,98 @@ namespace MirrorsEdgeCatTool
                 }
             }
 
-             string sbPath = Path.Combine(GamePath+MainFolder, tocPath + ".sb");
-             Sb mainSbFile = new Sb(sbPath);
-             Sb sbFile = new Sb(sbPath, (long)tocEntry.subTypes["offset"]);
-             Entry sbEntry = null;
-             foreach (Entry eb in sbFile.mainEntry.subTypes["ebx"])
-             {
-                 if (eb.subTypes["name"] == bPath)
-                 {
-                     sbEntry = eb;
-                     break;
-                 }
-             }
+            string sbPath = Path.Combine(GamePath, MainFolder, tocPath + ".sb");
+            Sb sbFile = new Sb(sbPath, (long)tocEntry.subTypes["offset"]);
+            Entry sbEntry = null;
+            foreach (Entry eb in sbFile.mainEntry.subTypes["res"])
+            {
+                if (eb.subTypes["name"] == bPath)
+                {
+                    sbEntry = eb;
+                    break;
+
+                }
+            }
             return  Tools.GetDataFromSha1(catFiles, sbEntry.subTypes["sha1"]);                        
-        }             
+        }
+
+        static void ImportThing(string aPath, string bPath, byte[] data)
+        {
+            string tocPath = "";
+            Entry tocEntry = null;
+            Toc mainToc = null;
+            foreach (Toc ent in tocFiles)
+            {
+                foreach (Entry en in ent.mainEntry.subTypes["bundles"])
+                {
+                    if (en.subTypes["id"] == aPath)
+                    {
+                        mainToc = ent;
+                        tocPath = ent.filePath;
+                        tocPath = tocPath.Substring(0, tocPath.LastIndexOf('.'));
+                        tocEntry = en;
+                        break;
+                    }
+                }
+            }
+
+            string sbPath = Path.Combine(GamePath, MainFolder, tocPath + ".sb");
+            Sb sbFile = new Sb(sbPath, (long)tocEntry.subTypes["offset"]);
+            Entry sbEntry = null;
+            foreach (Entry eb in sbFile.mainEntry.subTypes["res"])
+            {
+                if (eb.subTypes["name"] == bPath)
+                {
+                    sbEntry = eb;
+                    break;
+                }
+            }
+
+            Kat katSettings = Tools.GetCatSettings(catFiles, sbEntry.subTypes["sha1"]);
+            string cas1path = Path.Combine(GamePath, MainFolder, Path.GetDirectoryName(katSettings.motherCat.filePath)+"\\cas_0"+katSettings.casNo+".cas");
+            byte[] cas1 = File.ReadAllBytes(cas1path);
+            int z = 0;
+            /*if (data.Length > (uint)katSettings.size)
+            {
+                Console.WriteLine("Yeni dosyanın boyutu (" + data.Length + ") Orjinal boyuttan (" + katSettings.size + ") daha büyük!\nİptal.. ");
+                return;
+            }*/
+
+            for (uint i = katSettings.offset; i < katSettings.offset + katSettings.size; i++)
+            {
+                if (z < data.Length)
+                {
+                    cas1[i] = data[z];
+                    z++;
+                }
+                else
+                {
+                    cas1[i] = 0;
+                }
+            }
+            Console.WriteLine("Writing to Cas1 File..");
+            BackupAndWriteBytes(cas1path, cas1);
+            Console.WriteLine("OK.");
+        }
+        
+        static void ExportPaths(string where)
+        {
+            List<string> pathNames = new List<string>();
+            foreach (Sb sb in sbFiles)
+            {
+                foreach (Entry bundle in sb.mainEntry.subTypes["bundles"])
+                {
+                    string path = bundle.subTypes["path"];
+                    foreach (Entry ebxEntry in bundle.subTypes["ebx"])
+                    {
+                        string name = ebxEntry.subTypes["name"];
+                        pathNames.Add(path + ">>" + name);
+                    }
+                } 
+            }
+
+            File.WriteAllLines(where, pathNames.ToArray());
+        }
         
                
     }

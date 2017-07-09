@@ -30,11 +30,11 @@ namespace MirrorsEdgeCatTool
         public Liner[] ImportFromExcelFile(string where)
         {
             ExcelPackage pck = new ExcelPackage(File.Open(where, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-            ExcelWorksheet ws = pck.Workbook.Worksheets["Satirlar"];
+            ExcelWorksheet ws = pck.Workbook.Worksheets.ElementAt(0);
 
             List<Liner> importedLiners = new List<Liner>();
 
-            uint lastLength = 0;
+            uint curPos = 0;
             for (int i = 2; i <= ws.Dimension.Rows; i++)
             {
                 Liner lin = new Liner();
@@ -52,10 +52,11 @@ namespace MirrorsEdgeCatTool
                 str = ConvertBackUnicodes(str);
                 lin.lineBytes = Encoding.GetEncoding("ISO-8859-1").GetBytes(str + '\x00');
 
-                lin.grup = uint.Parse(ws.Cells["C" + (i)].Value.ToString());
                 lin.id = uint.Parse(ws.Cells["D" + (i)].Value.ToString());
-                lin.subPos = lastLength;
-                lastLength = (lastLength + (uint)lin.lineBytes.Length) % 65536;
+
+                lin.grup = curPos / 65536;
+                lin.subPos = curPos % 65536;
+                curPos = (curPos + (uint)lin.lineBytes.Length);
                 importedLiners.Add(lin);
 
             }
@@ -142,6 +143,7 @@ namespace MirrorsEdgeCatTool
                 for (int i = 0; i < linersOrderedByIds.Length; i++)
                 {
                     Liner lin = linersOrderedByIds[i];
+
                     binwr.Write(lin.id);
                     binwr.Write((Int16)lin.subPos);
                     binwr.Write((Int16)lin.grup);
@@ -208,7 +210,7 @@ namespace MirrorsEdgeCatTool
                         hold += remaining;
                     }
 
-                    Console.WriteLine(hold + " CData OK...");
+                    Console.Write(".");
                 }
 
             }
@@ -369,7 +371,8 @@ namespace MirrorsEdgeCatTool
                     else if (header != 0x7009)//must be compressed then, if not unknown header
                     {
                         Console.WriteLine("Unknown Header, At:" + binred.BaseStream.Position);
-                        return null;
+                        break;
+                        //return null;
                     }
                     uint compressedSize = ReadBigEndianUInt16(binred);
 
@@ -506,20 +509,5 @@ namespace MirrorsEdgeCatTool
             Array.Reverse(bb);
             return BitConverter.ToUInt32(bb, 0);
         }
-
-/*if (str.Contains("dictionary"))
-{
-    int bigb = 255;
-    List<byte> dd = new List<byte>();
-    for (int be = 30; be <= bigb; be++)
-    {
-        List<byte> aa = Encoding.Default.GetBytes(" "+be.ToString()+"-").ToList();
-        aa.Add((byte)be);
-        if (be!=123)
-            dd.AddRange(aa);
-    }
-    dd.Add(0);
-    lin.lineBytes = dd.ToArray();
-}*/
     }
 }
